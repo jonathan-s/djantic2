@@ -5,8 +5,8 @@
     <em><a href="https://pydantic-docs.helpmanual.io/">Pydantic</a> model support for <a href="https://www.djangoproject.com/"> Django</a></em>
 </p>
 <p style="text-align: center;">
-    <a href="https://img.shields.io/github/actions/workflow/status/jonathan-s/djantic2/test.yml?branch=main">
-    <img src="https://img.shields.io/github/workflow/status/jonathan-s/djantic2/Test/main" alt="GitHub Workflow Status (Test)" >
+    <a href="https://github.com/jonathan-s/djantic2/actions/workflows/test.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/jonathan-s/djantic2/test.yml?branch=main" alt="GitHub Workflow Status (Test)" >
     </a>
     <a href="https://pypi.org/project/djantic2" target="_blank">
         <img src="https://img.shields.io/pypi/v/djantic2" alt="PyPi package">
