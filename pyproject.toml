@@ -1,14 +1,15 @@
 [tool.poetry]
-name = "djantic"
+name = "djantic2"
 version = "1.0.0"
 description = "Pydantic models for Django"
 authors = ["Jonathan Sundqvist <git@co.argpar.se>", "Jordan Eremieff <jordan@eremieff.com>"]
 license = "MIT"
+packages = [{include = "djantic"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pydantic = "^2.6.2"
-Django = "~3"
+Django = ">3,<6"
 
 [tool.poetry.dev-dependencies]
 black = "^24.2.0"
