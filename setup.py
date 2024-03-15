@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 
-__version__ = "0.7.0"
+__version__ = "1.0.0"
 
 
 def get_long_description():
@@ -9,18 +9,18 @@ def get_long_description():
 
 
 setup(
-    name="djantic",
+    name="djantic2",
     version=__version__,
     packages=find_packages(),
     license="MIT",
-    url="https://github.com/jordaneremieff/djantic/",
+    url="https://github.com/jonathan-s/djantic2/",
     description="Pydantic model support for Django ORM",
     long_description=get_long_description(),
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     package_data={"djantic": ["py.typed"]},
     long_description_content_type="text/markdown",
-    author="Jordan Eremieff",
-    author_email="jordan@eremieff.com",
+    author="Jonathan Sundqvist",
+    author_email="git@co.argpar.se",
     classifiers=[
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
