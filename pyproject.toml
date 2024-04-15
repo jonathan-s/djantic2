@@ -15,11 +15,10 @@ pydantic = "^2.6.2"
 Django = ">3,<6"
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.2.0"
+ruff = "^0.3.7"
 setuptools = "^65.5.1"
 twine = "^3.4.1"
 wheel = "^0.38.1"
-flake8 = "^3.9.2"
 mypy = "^0.910"
 pytest = "^6.2.4"
 pytest-cov = "^2.12.1"
@@ -35,6 +34,33 @@ pytest-django = "^4.4.0"
 psycopg2-binary = "^2.9.1"
 bump2version = "^1.0.1"
 factory-boy = "^3.2.1"
+
+
+[tool.ruff]
+line-length = 88
+exclude = ['.git', '__pycache__', '__init__.py', '.mypy_cache', '.pytest_cache']
+lint.select = [
+  "E",  # pycodestyle errors
+  "W",  # pycodestyle warnings
+  "F",  # pyflakes
+  "I",  # isort
+  "C",  # flake8-comprehensions
+  "B",  # flake8-bugbear
+  "UP", # pyupgrade
+]
+lint.ignore = [
+  "E501", # line too long
+  "C901", # Comprehension is too complex (11 > 10)
+  "W191", # indentation contains tabs
+  "E402",
+  "E203",
+  "W503",
+]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
