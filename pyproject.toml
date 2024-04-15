@@ -54,7 +54,6 @@ lint.ignore = [
   "W191", # indentation contains tabs
   "E402",
   "E203",
-  "W503",
 ]
 
 [tool.ruff.lint.pyupgrade]
