@@ -2,16 +2,19 @@
 name = "djantic2"
 version = "1.0.1"
 description = "Pydantic models for Django"
-authors = ["Jonathan Sundqvist <git@co.argpar.se>", "Jordan Eremieff <jordan@eremieff.com>"]
+authors = [
+  "Jonathan Sundqvist <git@co.argpar.se>",
+  "Jordan Eremieff <jordan@eremieff.com>",
+]
 license = "MIT"
-packages = [{include = "djantic"}]
+packages = [{ include = "djantic" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pydantic = "^2.6.2"
 Django = ">3,<6"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^24.2.0"
 setuptools = "^65.5.1"
 twine = "^3.4.1"
