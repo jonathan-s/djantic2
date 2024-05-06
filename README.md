@@ -1,6 +1,4 @@
-<h1 style="text-align: center;">
-    Djantic2
-</h1>
+<h1 style="text-align: center;">Djantic2</h1>
 <p style="text-align: center;">
     <em><a href="https://pydantic-docs.helpmanual.io/">Pydantic</a> model support for <a href="https://www.djangoproject.com/"> Django</a></em>
 </p>
