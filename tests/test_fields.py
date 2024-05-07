@@ -1,8 +1,7 @@
 import pytest
-
+from pydantic import ConfigDict
 from testapp.models import Configuration, Listing, Preference, Record, Searchable
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 
@@ -273,7 +272,11 @@ def test_enum_choices():
     }
 
     preference = Preference.objects.create(
-        name="Jordan", preferred_sport="", preferred_musician=None
+        name="Jordan",
+        preferred_food="ba",
+        preferred_group=1,
+        preferred_sport="",
+        preferred_musician=None,
     )
     assert PreferenceSchema.from_django(preference).model_dump() == {
         "id": 1,
