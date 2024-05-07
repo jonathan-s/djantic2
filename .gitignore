@@ -132,3 +132,6 @@ dmypy.json
 .DS_Store
 *.sublime-workspace
 .vscode
+
+# Not necessary for libs, see https://github.com/python-poetry/poetry/issues/7488
+poetry.lock
