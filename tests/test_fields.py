@@ -308,7 +308,7 @@ def test_listing():
         model_config = ConfigDict(model=Listing, use_enum_values=True)
 
     assert ListingSchema.model_json_schema() == {
-        "description": "Listing(id, items)",
+        "description": "Listing(id, items, content_type)",
         "properties": {
             "id": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
@@ -322,6 +322,12 @@ def test_listing():
                 "title": "Items",
                 "type": "array",
             },
+            "content_type": {
+                "anyOf": [{"type": "integer"}, {"type": "null"}],
+                "default": None,
+                "description": "id",
+                "title": "Content Type",
+            },
         },
         "required": ["items"],
         "title": "ListingSchema",
@@ -330,6 +336,7 @@ def test_listing():
 
     preference = Listing(items=["a", "b"])
     assert ListingSchema.from_django(preference).dict() == {
+        "content_type": None,
         "id": None,
         "items": ["a", "b"],
     }

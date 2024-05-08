@@ -102,7 +102,16 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
     description = None
     title = None
     max_length = None
-    python_type = None
+
+    try:
+        deconstructed = field.deconstruct()
+        field_options = deconstructed[3] or {}
+        blank = field_options.pop("blank", False)
+        null = field_options.pop("null", False)
+    except AttributeError:
+        # Field does not have `deconstruct` method, just default to false
+        blank = False
+        null = False
 
     if field.is_relation:
         if not field.related_model:
@@ -117,6 +126,9 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
             python_type = List[Dict[str, pk_type]]
         else:
             python_type = pk_type
+
+        if blank or null:
+            python_type = Union[python_type, None]
 
         if field.related_model:
             field = field.target_field
@@ -152,11 +164,6 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
                 "%s is currently unhandled, defaulting to str.", field.__class__
             )
             python_type = str
-
-        deconstructed = field.deconstruct()
-        field_options = deconstructed[3] or {}
-        blank = field_options.pop("blank", False)
-        null = field_options.pop("null", False)
 
         if default is Required and field.has_default():
             if callable(field.default):

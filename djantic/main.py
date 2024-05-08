@@ -1,4 +1,5 @@
 import inspect
+from enum import Enum
 from functools import reduce
 from itertools import chain
 from typing import Any, Dict, List, Optional, no_type_check, Union
@@ -172,6 +173,8 @@ class ProxyGetterNestedObj:
             attr = list(attr.all())
         elif outer_type_ == int and issubclass(type(attr), Model):
             attr = attr.id
+        elif inspect.isclass(type(attr)) and issubclass(type(attr), Enum):
+            attr = attr.value
         elif issubclass(attr.__class__, ImageFieldFile) and issubclass(
             outer_type_, str
         ):
