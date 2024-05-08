@@ -281,3 +281,4 @@ class Case(ExtendedModel):
 
 class Listing(models.Model):
     items = ArrayField(models.TextField(), size=4)
+    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, blank=True, null=True)
