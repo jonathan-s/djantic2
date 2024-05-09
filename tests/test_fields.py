@@ -273,15 +273,15 @@ def test_enum_choices():
 
     preference = Preference.objects.create(
         name="Jordan",
-        preferred_food="ba",
-        preferred_group=1,
         preferred_sport="",
         preferred_musician=None,
     )
     assert PreferenceSchema.from_django(preference).model_dump() == {
         "id": 1,
         "name": "Jordan",
+        # default choice dumped
         "preferred_food": "ba",
+        # default choice dumped
         "preferred_group": 1,
         "preferred_sport": "",
         "preferred_musician": None,
@@ -304,6 +304,12 @@ def test_enum_choices_generates_unique_enums():
 
 @pytest.mark.django_db
 def test_listing():
+    """
+    Testing the following properties for a field.
+    - nullable foreign key
+    - array field
+    """
+
     class ListingSchema(ModelSchema):
         model_config = ConfigDict(model=Listing, use_enum_values=True)
 
