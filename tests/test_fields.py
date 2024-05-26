@@ -1,8 +1,36 @@
 import pytest
 from pydantic import ConfigDict
-from testapp.models import Configuration, Listing, Preference, Record, Searchable
+from testapp.models import Configuration, Listing, Preference, Record, Searchable, User
 
 from djantic import ModelSchema
+
+
+@pytest.mark.django_db
+def test_schema_without_include_and_exclude():
+    """
+    Using a schema without include and exclude populates userschema correctly
+    Optional foreign key handled gracefully.
+    """
+
+    user = User.objects.create(
+        first_name="Jordan", last_name="Eremieff", email="jordan@eremieff.com"
+    )
+
+    class UserSchema(ModelSchema):
+        model_config = ConfigDict(model=User)
+
+    dumped = UserSchema.from_django(user).model_dump()
+    # These values are here, but a hassle to use freeze gun.
+    dumped.pop("updated_at")
+    dumped.pop("created_at")
+
+    assert dumped == {
+        "first_name": "Jordan",
+        "id": 1,
+        "email": "jordan@eremieff.com",
+        "profile": None,
+        "last_name": "Eremieff",
+    }
 
 
 @pytest.mark.django_db

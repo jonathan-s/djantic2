@@ -364,10 +364,17 @@ def test_one_to_one():
                 "description": "A user of the application.",
                 "properties": {
                     "profile": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                            },
+                            {
+                                "type": "null",
+                            },
+                        ],
                         "default": None,
                         "description": "id",
                         "title": "Profile",
-                        "type": "integer",
                     },
                     "id": {
                         "anyOf": [{"type": "integer"}, {"type": "null"}],
