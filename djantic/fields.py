@@ -2,7 +2,8 @@ import logging
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
+import typing
 from uuid import UUID
 
 from django.utils.functional import Promise
@@ -130,9 +131,6 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
         if blank or null:
             python_type = Union[python_type, None]
 
-        if field.related_model:
-            field = field.target_field
-
     else:
         if field.choices:
             enum_choices = {}
@@ -182,7 +180,11 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
         title = field.verbose_name.title()
 
     if not description:
-        description = field.name
+        related_field_name = None
+        if field.related_model:
+            related_field_name = field.target_field.name
+
+        description = related_field_name or field.name
 
     if (
         getattr(field, "get_internal_type", lambda: None)() in STR_TYPES
@@ -190,13 +192,25 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
     ):
         max_length = field.max_length
 
+    field_info = FieldInfo(
+        default=default,
+        default_factory=default_factory,
+        title=title,
+        description=str(description),
+        max_length=max_length,
+    )
+
+    field_is_optional = all([
+        getattr(field, "null", None),
+        field.is_relation,
+        # A list that is null, is the empty list. So there is no need
+        # to make it nullable.
+        typing.get_origin(python_type) is not list
+    ])
+    if field_is_optional:
+        python_type = Optional[python_type]
+
     return (
         python_type,
-        FieldInfo(
-            default=default,
-            default_factory=default_factory,
-            title=title,
-            description=str(description),
-            max_length=max_length,
-        ),
+        field_info
     )
