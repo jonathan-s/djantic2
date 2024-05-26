@@ -124,6 +124,7 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     getattr(model_field[1], "alias", None) or field_name: field_name
                     for field_name, model_field in field_values.items()
                 }
+
                 model_schema = create_model(
                     name,
                     __base__=cls,
@@ -251,7 +252,29 @@ class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
         return cls.from_django(*args, **kwargs)
 
     @classmethod
-    def from_django(cls, objs, many=False, context={}, dump=False):
+    def to_django(cls, objs, many=False, validate=True):
+        Model = cls.model_config["model"]
+        if many:
+            # TODO, support for generators, possibly return generator.
+            is_not_dict = False if isinstance(objs[0], dict) else True
+            django_objs = []
+            for data in objs:
+                obj = Model(**data.dict()) if is_not_dict else Model(**data)
+                if validate:
+                    obj.clean_fields()
+                django_objs.append(obj)
+            return django_objs
+
+        if not isinstance(objs, dict):
+            objs = objs.dict()
+
+        obj = Model(**objs)
+        if validate:
+            obj.clean_fields()
+        return obj
+
+    @classmethod
+    def from_django(cls, objs, many=False, context={}):
         # TODO is context really passed into model_validate, test this
         cls.context = context
         if many:
