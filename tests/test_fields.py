@@ -2,6 +2,12 @@ import pytest
 from pydantic import ConfigDict
 from testapp.models import Configuration, Listing, Preference, Record, Searchable, User
 
+from pydantic import (
+    ValidationInfo,
+    field_validator,
+    ValidationError,
+)
+
 from djantic import ModelSchema
 
 
@@ -31,6 +37,34 @@ def test_schema_without_include_and_exclude():
         "profile": None,
         "last_name": "Eremieff",
     }
+
+
+@pytest.mark.django_db
+def test_context_for_field():
+
+    def get_context():
+        return {'check_title': lambda x: x.istitle()}
+
+    class UserSchema(ModelSchema):
+        model_config = ConfigDict(
+            model=User,
+            revalidate_instances='always'
+        )
+
+        @field_validator('first_name', mode="before", check_fields=False)
+        @classmethod
+        def validate_first_name(cls, v: str, info: ValidationInfo):
+            if not info.context:
+                return v
+
+            check_title = info.context.get('check_title')
+            if check_title and not check_title(v):
+                raise ValueError('First name needs to be a title')
+            return v
+
+    user = User.objects.create(first_name="hello", email="a@a.com")
+    with pytest.raises(ValidationError):
+        UserSchema.from_django(user, context=get_context())
 
 
 @pytest.mark.django_db

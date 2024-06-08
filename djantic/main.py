@@ -251,24 +251,18 @@ class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
         return cls.from_django(*args, **kwargs)
 
     @classmethod
-    def from_django(cls, objs, many=False, context={}, dump=False):
-        # TODO is context really passed into model_validate, test this
-        cls.context = context
+    def from_django(cls, objs, many=False, context={}):
         if many:
             result_objs = []
             for obj in objs:
-                cls.instance = obj
                 obj = ProxyGetterNestedObj(obj, cls)
                 instance = cls(**obj.dict())
-                result_objs.append(cls.model_validate(instance))
+                result_objs.append(cls.model_validate(instance, context=context))
             return result_objs
-
-        cls.instance = objs
-        # NOTE question mark around the code above.
 
         obj = ProxyGetterNestedObj(objs, cls)
         instance = cls(**obj.dict())
-        return cls.model_validate(instance)
+        return cls.model_validate(instance, context=context)
 
 
 _is_base_model_class_defined = True
