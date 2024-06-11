@@ -72,7 +72,7 @@ See https://pydantic-docs.helpmanual.io/usage/models/ for more.
 
 ### Loading and exporting model instances
 
-Use the `from_orm` method on the model schema to load a Django model instance for <a href="https://pydantic-docs.helpmanual.io/usage/exporting_models/">export</a>:
+Use the `from_django` method on the model schema to load a Django model instance for <a href="https://pydantic-docs.helpmanual.io/usage/exporting_models/">export</a>:
 
 ```python
 user = User.objects.create(
@@ -81,7 +81,7 @@ user = User.objects.create(
     email="jordan@eremieff.com"
 )
 
-user_schema = UserSchema.from_orm(user)
+user_schema = UserSchema.from_django(user)
 print(user_schema.json(indent=2))
 ```
 
@@ -176,7 +176,7 @@ Now let's assume you're interested in exporting the order and profile informatio
 
 ```python
 user = OrderUser.objects.first()
-print(OrderUserSchema.from_orm(user).json(ident=4))
+print(OrderUserSchema.from_django(user).json(ident=4))
 ```
 
 **Output:**

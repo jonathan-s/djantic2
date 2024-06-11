@@ -248,6 +248,7 @@ class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
 
     @classmethod
     def from_orm(cls, *args, **kwargs):
+        """Considered deprecated, use from django instead"""
         return cls.from_django(*args, **kwargs)
 
     @classmethod
