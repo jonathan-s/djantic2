@@ -2,7 +2,7 @@ import inspect
 from enum import Enum
 from functools import reduce
 from itertools import chain
-from types import NoneType, UnionType
+from types import UnionType
 from typing import Any, Dict, List, Optional, no_type_check, Union
 from typing_extensions import get_origin, get_args
 
@@ -141,7 +141,7 @@ def _is_optional_field(annotation) -> bool:
     args = get_args(annotation)
     return (
             get_origin(annotation) is UnionType
-            and NoneType in args
+            and type(None) in args
             and len(args) == 2
             and any(issubclass(arg, ModelSchema) for arg in args)
     )
@@ -216,7 +216,7 @@ class ProxyGetterNestedObj:
                     data[key] = None
                 else:
                     non_none_type_annotation = next(
-                        arg for arg in get_args(annotation) if arg is not NoneType
+                        arg for arg in get_args(annotation) if arg is not type(None)
                     )
                     data[key] = self._get_annotation_objects(value, non_none_type_annotation)
 

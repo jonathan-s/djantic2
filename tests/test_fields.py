@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ConfigDict
-from testapp.models import Configuration, Listing, Preference, Record, Searchable, User, A, B
+from testapp.models import Configuration, Listing, Preference, Record, Searchable, User, NullableChar, NullableFK
 
 from pydantic import (
     ValidationInfo,
@@ -412,23 +412,23 @@ def test_listing():
 
 @pytest.mark.django_db
 def test_nullable_fk():
-    class ASchema(ModelSchema):
-        model_config = ConfigDict(model=A, include='value')
+    class NullableCharSchema(ModelSchema):
+        model_config = ConfigDict(model=NullableChar, include='value')
 
-    class BSchema(ModelSchema):
-        a: ASchema | None = None
-        model_config = ConfigDict(model=B, include='a')
+    class NullableFKSchema(ModelSchema):
+        nullable_char: NullableCharSchema | None = None
+        model_config = ConfigDict(model=NullableFK, include='nullable_char')
 
-    a = A(value="test")
-    a.save()
-    model = B(a=a)
-    assert BSchema.from_django(model).dict() == {
-        "a": {
+    nullable_char = NullableChar(value="test")
+    nullable_char.save()
+    model = NullableFK(nullable_char=nullable_char)
+    assert NullableFKSchema.from_django(model).dict() == {
+        "nullable_char": {
             "value": "test"
         }
     }
 
-    model2 = B(a=None)
-    assert BSchema.from_django(model2).dict() == {
-        "a": None
+    model2 = NullableFK(nullable_char=None)
+    assert NullableFKSchema.from_django(model2).dict() == {
+        "nullable_char": None
     }
