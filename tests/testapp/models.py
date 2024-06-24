@@ -282,3 +282,11 @@ class Case(ExtendedModel):
 class Listing(models.Model):
     items = ArrayField(models.TextField(), size=4)
     content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, blank=True, null=True)
+
+
+class A(models.Model):
+    value = models.CharField(max_length=256, null=True, blank=True)
+
+
+class B(models.Model):
+    a = models.ForeignKey(A, null=True, blank=True, on_delete=models.CASCADE)

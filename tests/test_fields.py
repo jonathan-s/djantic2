@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ConfigDict
-from testapp.models import Configuration, Listing, Preference, Record, Searchable, User
+from testapp.models import Configuration, Listing, Preference, Record, Searchable, User, A, B
 
 from pydantic import (
     ValidationInfo,
@@ -407,4 +407,28 @@ def test_listing():
         "content_type": None,
         "id": None,
         "items": ["a", "b"],
+    }
+
+
+@pytest.mark.django_db
+def test_nullable_fk():
+    class ASchema(ModelSchema):
+        model_config = ConfigDict(model=A, include='value')
+
+    class BSchema(ModelSchema):
+        a: ASchema | None = None
+        model_config = ConfigDict(model=B, include='a')
+
+    a = A(value="test")
+    a.save()
+    model = B(a=a)
+    assert BSchema.from_django(model).dict() == {
+        "a": {
+            "value": "test"
+        }
+    }
+
+    model2 = B(a=None)
+    assert BSchema.from_django(model2).dict() == {
+        "a": None
     }
