@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 from pydantic import ConfigDict
 from testapp.models import Configuration, Listing, Preference, Record, Searchable, User, NullableChar, NullableFK
@@ -416,7 +418,7 @@ def test_nullable_fk():
         model_config = ConfigDict(model=NullableChar, include='value')
 
     class NullableFKSchema(ModelSchema):
-        nullable_char: NullableCharSchema | None = None
+        nullable_char: Optional[NullableCharSchema] = None
         model_config = ConfigDict(model=NullableFK, include='nullable_char')
 
     nullable_char = NullableChar(value="test")

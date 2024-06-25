@@ -1,4 +1,5 @@
 import inspect
+import sys
 from enum import Enum
 from functools import reduce
 from itertools import chain
@@ -16,6 +17,10 @@ from pydantic import BaseModel, create_model
 from pydantic.errors import PydanticUserError
 from pydantic._internal._model_construction import ModelMetaclass
 
+if sys.version_info >= (3, 10):
+    from types import UnionType
+else:
+    from typing import Union as UnionType
 
 from .fields import ModelSchemaField
 
@@ -140,7 +145,7 @@ class ModelSchemaMetaclass(ModelMetaclass):
 def _is_optional_field(annotation) -> bool:
     args = get_args(annotation)
     return (
-            get_origin(annotation) is UnionType
+            (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
             and type(None) in args
             and len(args) == 2
             and any(issubclass(arg, ModelSchema) for arg in args)
