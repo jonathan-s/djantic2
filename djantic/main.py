@@ -3,7 +3,6 @@ import sys
 from enum import Enum
 from functools import reduce
 from itertools import chain
-from types import UnionType
 from typing import Any, Dict, List, Optional, no_type_check, Union
 from typing_extensions import get_origin, get_args
 
