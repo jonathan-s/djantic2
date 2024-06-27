@@ -147,7 +147,7 @@ def _is_optional_field(annotation) -> bool:
             (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
             and type(None) in args
             and len(args) == 2
-            and any(issubclass(arg, ModelSchema) for arg in args)
+            and any(inspect.isclass(arg) and issubclass(arg, ModelSchema) for arg in args)
     )
 
 
