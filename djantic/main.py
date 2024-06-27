@@ -1,4 +1,5 @@
 import inspect
+import sys
 from enum import Enum
 from functools import reduce
 from itertools import chain
@@ -15,6 +16,10 @@ from pydantic import BaseModel, create_model
 from pydantic.errors import PydanticUserError
 from pydantic._internal._model_construction import ModelMetaclass
 
+if sys.version_info >= (3, 10):
+    from types import UnionType
+else:
+    from typing import Union as UnionType
 
 from .fields import ModelSchemaField
 
@@ -136,6 +141,16 @@ class ModelSchemaMetaclass(ModelMetaclass):
         return cls
 
 
+def _is_optional_field(annotation) -> bool:
+    args = get_args(annotation)
+    return (
+            (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
+            and type(None) in args
+            and len(args) == 2
+            and any(inspect.isclass(arg) and issubclass(arg, ModelSchema) for arg in args)
+    )
+
+
 class ProxyGetterNestedObj:
     def __init__(self, obj: Any, schema_class):
         self._obj = obj
@@ -199,7 +214,17 @@ class ProxyGetterNestedObj:
                 # Pick the underlying annotation
                 annotation = get_args(annotation)[0]
 
-            if inspect.isclass(annotation) and issubclass(annotation, ModelSchema):
+            if _is_optional_field(annotation):
+                value = self.get(key)
+                if value is None:
+                    data[key] = None
+                else:
+                    non_none_type_annotation = next(
+                        arg for arg in get_args(annotation) if arg is not type(None)
+                    )
+                    data[key] = self._get_annotation_objects(value, non_none_type_annotation)
+
+            elif inspect.isclass(annotation) and issubclass(annotation, ModelSchema):
                 data[key] = self._get_annotation_objects(self.get(key), annotation)
             else:
                 key = fieldinfo.alias if fieldinfo.alias else key

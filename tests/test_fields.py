@@ -1,6 +1,8 @@
+from typing import Optional
+
 import pytest
 from pydantic import ConfigDict
-from testapp.models import Configuration, Listing, Preference, Record, Searchable, User
+from testapp.models import Configuration, Listing, Preference, Record, Searchable, User, NullableChar, NullableFK
 
 from pydantic import (
     ValidationInfo,
@@ -407,4 +409,28 @@ def test_listing():
         "content_type": None,
         "id": None,
         "items": ["a", "b"],
+    }
+
+
+@pytest.mark.django_db
+def test_nullable_fk():
+    class NullableCharSchema(ModelSchema):
+        model_config = ConfigDict(model=NullableChar, include='value')
+
+    class NullableFKSchema(ModelSchema):
+        nullable_char: Optional[NullableCharSchema] = None
+        model_config = ConfigDict(model=NullableFK, include='nullable_char')
+
+    nullable_char = NullableChar(value="test")
+    nullable_char.save()
+    model = NullableFK(nullable_char=nullable_char)
+    assert NullableFKSchema.from_django(model).dict() == {
+        "nullable_char": {
+            "value": "test"
+        }
+    }
+
+    model2 = NullableFK(nullable_char=None)
+    assert NullableFKSchema.from_django(model2).dict() == {
+        "nullable_char": None
     }
