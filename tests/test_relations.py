@@ -67,8 +67,7 @@ def test_m2m():
     }
 
     class PublicationSchema(ModelSchema):
-        class Config:
-            model = Publication
+        model_config = ConfigDict(model=Publication)
 
     class ArticleWithPublicationListSchema(ModelSchema):
         publications: List[PublicationSchema]
@@ -145,7 +144,7 @@ def test_m2m():
     article.publications.add(publication)
 
     schema = ArticleWithPublicationListSchema.from_django(article)
-    assert schema.dict() == {
+    assert schema.model_dump() == {
         "id": 1,
         "headline": "My Headline",
         "pub_date": datetime.date(2021, 3, 20),
@@ -868,24 +867,28 @@ def test_m2m_reverse():
     expert = Expert.objects.create(name="My Expert")
     case_schema = CaseSchema.from_django(case)
     expert_schema = ExpertSchema.from_django(expert)
-    assert case_schema.dict() == {
+    assert case_schema.model_dump() == {
         "related_experts": [],
         "id": 1,
         "name": "My Case",
         "details": "Some text data.",
     }
-    assert expert_schema.dict() == {"id": 1, "name": "My Expert", "cases": []}
+    assert expert_schema.model_dump() == {"id": 1, "name": "My Expert", "cases": []}
 
     expert.cases.add(case)
     case_schema = CaseSchema.from_django(case)
     expert_schema = ExpertSchema.from_django(expert)
-    assert case_schema.dict() == {
+    assert case_schema.model_dump() == {
         "related_experts": [{"id": 1}],
         "id": 1,
         "name": "My Case",
         "details": "Some text data.",
     }
-    assert expert_schema.dict() == {"id": 1, "name": "My Expert", "cases": [{"id": 1}]}
+    assert expert_schema.model_dump() == {
+        "id": 1,
+        "name": "My Expert",
+        "cases": [{"id": 1}],
+    }
 
     class CustomExpertSchema(ModelSchema):
         """Custom schema"""
@@ -955,7 +958,7 @@ def test_m2m_reverse():
     }
 
     case_schema = CaseSchema.from_django(case)
-    assert case_schema.dict() == {
+    assert case_schema.model_dump() == {
         "related_experts": [{"id": 1, "name": "My Expert", "cases": [{"id": 1}]}],
         "id": 1,
         "name": "My Case",
@@ -1003,7 +1006,7 @@ def test_alias():
     profile = Profile.objects.create(
         user=user, website="www.github.com", location="Europe"
     )
-    assert ProfileSchema.from_django(profile).dict() == {
+    assert ProfileSchema.from_django(profile).model_dump() == {
         "first_name": "Jack",
         "id": 1,
         "location": "Europe",

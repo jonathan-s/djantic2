@@ -532,7 +532,7 @@ def test_listing():
     }
 
     preference = Listing(items=["a", "b"])
-    assert ListingSchema.from_django(preference).dict() == {
+    assert ListingSchema.from_django(preference).model_dump() == {
         "content_type": None,
         "id": None,
         "items": ["a", "b"],
@@ -551,13 +551,9 @@ def test_nullable_fk():
     nullable_char = NullableChar(value="test")
     nullable_char.save()
     model = NullableFK(nullable_char=nullable_char)
-    assert NullableFKSchema.from_django(model).dict() == {
-        "nullable_char": {
-            "value": "test"
-        }
+    assert NullableFKSchema.from_django(model).model_dump() == {
+        "nullable_char": {"value": "test"}
     }
 
     model2 = NullableFK(nullable_char=None)
-    assert NullableFKSchema.from_django(model2).dict() == {
-        "nullable_char": None
-    }
+    assert NullableFKSchema.from_django(model2).model_dump() == {"nullable_char": None}
