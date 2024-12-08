@@ -74,7 +74,7 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     raise PydanticUserError(
                         f'{exc} (Is `model_config["model"]` a valid Django model class?)',
                         code="class-not-valid",
-                    )
+                    ) from exc
 
                 if include == "__annotations__":
                     include = list(annotations.keys())
@@ -276,7 +276,8 @@ class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
         return cls.from_django(*args, **kwargs)
 
     @classmethod
-    def from_django(cls, objs, many=False, context={}):
+    def from_django(cls, objs, many=False, context=None):
+        context = context or {}
         if many:
             result_objs = []
             for obj in objs:

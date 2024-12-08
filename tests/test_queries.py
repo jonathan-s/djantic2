@@ -234,7 +234,7 @@ def test_get_queryset_with_generic_foreign_key():
         model_config = ConfigDict(model=Bookmark)
 
     schema = BookmarkSchema.from_django(bookmark)
-    schema.model_dump() == {
+    assert schema.model_dump() == {
         "id": 1,
         "url": "https://github.com",
         "tags": [{"id": 1}, {"id": 2}],
