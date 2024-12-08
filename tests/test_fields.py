@@ -1,13 +1,16 @@
 from typing import Optional
 
 import pytest
-from pydantic import ConfigDict
-from testapp.models import Configuration, Listing, Preference, Record, Searchable, User, NullableChar, NullableFK
-
-from pydantic import (
-    ValidationInfo,
-    field_validator,
-    ValidationError,
+from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
+from testapp.models import (
+    Configuration,
+    Listing,
+    NullableChar,
+    NullableFK,
+    Preference,
+    Record,
+    Searchable,
+    User,
 )
 
 from djantic import ModelSchema
@@ -240,13 +243,13 @@ def test_lazy_choice_field():
         "description": "A generic record model.",
         "properties": {
             "record_type": {
-                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordTypeEnum"}],
+                "$ref": "#/$defs/RecordSchemaRecordTypeEnum",
                 "default": "NEW",
                 "description": "record_type",
                 "title": "Record Type",
             },
             "record_status": {
-                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordStatusEnum"}],
+                "$ref": "#/$defs/RecordSchemaRecordStatusEnum",
                 "default": 0,
                 "description": "record_status",
                 "title": "Record Status",
@@ -300,13 +303,13 @@ def test_enum_choices():
                 "type": "string",
             },
             "preferred_food": {
-                "allOf": [{"$ref": "#/$defs/PreferenceSchemaPreferredFoodEnum"}],
+                "$ref": "#/$defs/PreferenceSchemaPreferredFoodEnum",
                 "default": "ba",
                 "description": "preferred_food",
                 "title": "Preferred Food",
             },
             "preferred_group": {
-                "allOf": [{"$ref": "#/$defs/PreferenceSchemaPreferredGroupEnum"}],
+                "$ref": "#/$defs/PreferenceSchemaPreferredGroupEnum",
                 "default": 1,
                 "description": "preferred_group",
                 "title": "Preferred Group",

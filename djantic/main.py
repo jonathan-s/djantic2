@@ -3,8 +3,7 @@ import sys
 from enum import Enum
 from functools import reduce
 from itertools import chain
-from typing import Any, Dict, List, Optional, no_type_check, Union
-from typing_extensions import get_origin, get_args
+from typing import Any, Dict, List, Optional, Union, no_type_check
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Manager, Model
@@ -13,8 +12,9 @@ from django.db.models.fields.reverse_related import ForeignObjectRel, OneToOneRe
 from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from pydantic import BaseModel, create_model
-from pydantic.errors import PydanticUserError
 from pydantic._internal._model_construction import ModelMetaclass
+from pydantic.errors import PydanticUserError
+from typing_extensions import get_args, get_origin
 
 if sys.version_info >= (3, 10):
     from types import UnionType
@@ -124,7 +124,6 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     field_values[field_name] = (python_type, pydantic_field)
 
                 cls.__doc__ = namespace.get("__doc__", config["model"].__doc__)
-                cls.model_fields = {}
                 cls.__alias_map__ = {
                     getattr(model_field[1], "alias", None) or field_name: field_name
                     for field_name, model_field in field_values.items()
