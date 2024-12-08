@@ -2,11 +2,9 @@ import datetime
 from typing import Optional
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import AliasGenerator, BaseModel, ConfigDict, Field
+from testapp.models import Profile, User
 
-from testapp.models import User, Profile, Configuration
-
-from pydantic import ConfigDict, AliasGenerator
 from djantic import ModelSchema
 
 

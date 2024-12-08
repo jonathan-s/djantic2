@@ -1,9 +1,9 @@
 import logging
+import typing
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Union, Optional
-import typing
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from django.utils.functional import Promise
@@ -200,17 +200,16 @@ def ModelSchemaField(field: Any, schema_name: str) -> tuple:
         max_length=max_length,
     )
 
-    field_is_optional = all([
-        getattr(field, "null", None),
-        field.is_relation,
-        # A list that is null, is the empty list. So there is no need
-        # to make it nullable.
-        typing.get_origin(python_type) is not list
-    ])
+    field_is_optional = all(
+        [
+            getattr(field, "null", None),
+            field.is_relation,
+            # A list that is null, is the empty list. So there is no need
+            # to make it nullable.
+            typing.get_origin(python_type) is not list,
+        ]
+    )
     if field_is_optional:
         python_type = Optional[python_type]
 
-    return (
-        python_type,
-        field_info
-    )
+    return (python_type, field_info)

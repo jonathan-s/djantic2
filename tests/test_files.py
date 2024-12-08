@@ -1,9 +1,9 @@
 from tempfile import NamedTemporaryFile
 
 import pytest
+from pydantic import ConfigDict
 from testapp.models import Attachment
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 

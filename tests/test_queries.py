@@ -1,9 +1,9 @@
 from typing import List
 
 import pytest
+from pydantic import ConfigDict
 from testapp.models import Bookmark, Message, Profile, Tagged, Thread, User
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 
@@ -28,7 +28,6 @@ def test_get_instance():
 
 @pytest.mark.django_db
 def test_get_instance_with_generic_foreign_key():
-
     bookmark = Bookmark.objects.create(url="https://www.djangoproject.com/")
     Tagged.objects.create(content_object=bookmark, slug="django")
 
@@ -36,7 +35,6 @@ def test_get_instance_with_generic_foreign_key():
         model_config = ConfigDict(model=Tagged)
 
     class BookmarkWithTaggedSchema(ModelSchema):
-
         tags: List[TaggedSchema]
         model_config = ConfigDict(model=Bookmark)
 
@@ -222,7 +220,6 @@ def test_get_queryset_with_reverse_foreign_key():
 
 @pytest.mark.django_db
 def test_get_queryset_with_generic_foreign_key():
-
     bookmark = Bookmark.objects.create(url="https://github.com")
     bookmark.tags.create(slug="tag-1")
     bookmark.tags.create(slug="tag-2")

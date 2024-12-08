@@ -1,8 +1,8 @@
 import pytest
+from pydantic import ConfigDict
 from pydantic.errors import PydanticUserError
 from testapp.models import User
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 

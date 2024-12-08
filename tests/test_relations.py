@@ -2,7 +2,7 @@ import datetime
 from typing import Dict, List, Optional
 
 import pytest
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from testapp.models import (
     Article,
     Bookmark,
@@ -17,7 +17,6 @@ from testapp.models import (
     User,
 )
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 
@@ -656,7 +655,6 @@ def test_generic_relation():
     }
 
     class BookmarkWithTaggedSchema(ModelSchema):
-
         tags: List[TaggedSchema]
         model_config = ConfigDict(model=Bookmark)
 
@@ -724,7 +722,6 @@ def test_generic_relation():
     }
 
     class ItemSchema(ModelSchema):
-
         tags: List[TaggedSchema]
         model_config = ConfigDict(model=Item)
 
