@@ -217,7 +217,7 @@ def test_postgres_json_field():
 
 
 @pytest.mark.django_db
-def test_lazy_choice_field():
+def test_lazy_choice_field(pydantic_version: version.Version):
     """
     Test generating a dynamic enum choice field.
     """
@@ -227,7 +227,7 @@ def test_lazy_choice_field():
             model=Record, include=["record_type", "record_status"]
         )
 
-    assert RecordSchema.model_json_schema() == {
+    pydantic_v28_schema = {
         "$defs": {
             "RecordSchemaRecordStatusEnum": {
                 "enum": [0, 1, 2],
@@ -254,18 +254,62 @@ def test_lazy_choice_field():
                 "description": "record_status",
                 "title": "Record Status",
             },
+            "record_type": {
+                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordTypeEnum"}],
+                "default": "NEW",
+                "description": "record_type",
+                "title": "Record Type",
+            },
         },
         "title": "RecordSchema",
         "type": "object",
     }
 
+    pydantic_v29_schema = {
+        "$defs": {
+            "RecordSchemaRecordStatusEnum": {
+                "enum": [0, 1, 2],
+                "title": "RecordSchemaRecordStatusEnum",
+                "type": "integer",
+            },
+            "RecordSchemaRecordTypeEnum": {
+                "enum": ["NEW", "OLD"],
+                "title": "RecordSchemaRecordTypeEnum",
+                "type": "string",
+            },
+        },
+        "description": "A generic record model.",
+        "properties": {
+            "record_status": {
+                "$ref": "#/$defs/RecordSchemaRecordStatusEnum",
+                "default": 0,
+                "description": "record_status",
+                "title": "Record Status",
+            },
+            "record_type": {
+                "$ref": "#/$defs/RecordSchemaRecordTypeEnum",
+                "default": "NEW",
+                "description": "record_type",
+                "title": "Record Type",
+            },
+        },
+        "title": "RecordSchema",
+        "type": "object",
+    }
+
+    schema = pydantic_v29_schema
+    if pydantic_version < version.parse("2.9"):
+        schema = pydantic_v28_schema
+
+    assert RecordSchema.model_json_schema() == schema
+
 
 @pytest.mark.django_db
-def test_enum_choices():
+def test_enum_choices(pydantic_version: version.Version):
     class PreferenceSchema(ModelSchema):
         model_config = ConfigDict(model=Preference, use_enum_values=True)
 
-    assert PreferenceSchema.model_json_schema() == {
+    pydantic_v28_schema = {
         "$defs": {
             "PreferenceSchemaPreferredFoodEnum": {
                 "enum": ["ba", "ap"],
@@ -288,7 +332,8 @@ def test_enum_choices():
                 "type": "string",
             },
         },
-        "description": "Preference(id, name, preferred_food, preferred_group, preferred_sport, preferred_musician)",
+        "description": "Preference(id, name, preferred_food, preferred_group, "
+        "preferred_sport, preferred_musician)",
         "properties": {
             "id": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
@@ -314,6 +359,15 @@ def test_enum_choices():
                 "description": "preferred_group",
                 "title": "Preferred Group",
             },
+            "preferred_musician": {
+                "anyOf": [
+                    {"$ref": "#/$defs/PreferenceSchemaPreferredMusicianEnum"},
+                    {"type": "null"},
+                ],
+                "default": "",
+                "description": "preferred_musician",
+                "title": "Preferred Musician",
+            },
             "preferred_sport": {
                 "anyOf": [
                     {"$ref": "#/$defs/PreferenceSchemaPreferredSportEnum"},
@@ -322,6 +376,62 @@ def test_enum_choices():
                 "default": None,
                 "description": "preferred_sport",
                 "title": "Preferred Sport",
+            },
+        },
+        "required": ["name"],
+        "title": "PreferenceSchema",
+        "type": "object",
+    }
+
+    pydantic_v29_schema = {
+        "$defs": {
+            "PreferenceSchemaPreferredFoodEnum": {
+                "enum": ["ba", "ap"],
+                "title": "PreferenceSchemaPreferredFoodEnum",
+                "type": "string",
+            },
+            "PreferenceSchemaPreferredGroupEnum": {
+                "enum": [1, 2],
+                "title": "PreferenceSchemaPreferredGroupEnum",
+                "type": "integer",
+            },
+            "PreferenceSchemaPreferredMusicianEnum": {
+                "enum": ["tom_jobim", "sinatra", ""],
+                "title": "PreferenceSchemaPreferredMusicianEnum",
+                "type": "string",
+            },
+            "PreferenceSchemaPreferredSportEnum": {
+                "enum": ["football", "basketball", ""],
+                "title": "PreferenceSchemaPreferredSportEnum",
+                "type": "string",
+            },
+        },
+        "description": "Preference(id, name, preferred_food, preferred_group, "
+        "preferred_sport, preferred_musician)",
+        "properties": {
+            "id": {
+                "anyOf": [{"type": "integer"}, {"type": "null"}],
+                "default": None,
+                "description": "id",
+                "title": "Id",
+            },
+            "name": {
+                "description": "name",
+                "maxLength": 128,
+                "title": "Name",
+                "type": "string",
+            },
+            "preferred_food": {
+                "$ref": "#/$defs/PreferenceSchemaPreferredFoodEnum",
+                "default": "ba",
+                "description": "preferred_food",
+                "title": "Preferred Food",
+            },
+            "preferred_group": {
+                "$ref": "#/$defs/PreferenceSchemaPreferredGroupEnum",
+                "default": 1,
+                "description": "preferred_group",
+                "title": "Preferred Group",
             },
             "preferred_musician": {
                 "anyOf": [
@@ -332,11 +442,25 @@ def test_enum_choices():
                 "description": "preferred_musician",
                 "title": "Preferred Musician",
             },
+            "preferred_sport": {
+                "anyOf": [
+                    {"$ref": "#/$defs/PreferenceSchemaPreferredSportEnum"},
+                    {"type": "null"},
+                ],
+                "default": None,
+                "description": "preferred_sport",
+                "title": "Preferred Sport",
+            },
         },
         "required": ["name"],
         "title": "PreferenceSchema",
         "type": "object",
     }
+
+    schema = pydantic_v29_schema
+    if pydantic_version < version.parse("2.9"):
+        schema = pydantic_v28_schema
+    assert PreferenceSchema.model_json_schema() == schema
 
     preference = Preference.objects.create(
         name="Jordan",
