@@ -10,9 +10,9 @@ license = "MIT"
 packages = [{ include = "djantic" }]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-pydantic = "^2.6.2"
+python = "^3.9"
 Django = ">3,<6"
+pydantic = "^2.6.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.3.7"
