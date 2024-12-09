@@ -245,13 +245,13 @@ def test_lazy_choice_field(pydantic_version: version.Version):
         "description": "A generic record model.",
         "properties": {
             "record_type": {
-                "$ref": "#/$defs/RecordSchemaRecordTypeEnum",
+                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordTypeEnum"}],
                 "default": "NEW",
                 "description": "record_type",
                 "title": "Record Type",
             },
             "record_status": {
-                "$ref": "#/$defs/RecordSchemaRecordStatusEnum",
+                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordStatusEnum"}],
                 "default": 0,
                 "description": "record_status",
                 "title": "Record Status",
@@ -350,13 +350,13 @@ def test_enum_choices(pydantic_version: version.Version):
                 "type": "string",
             },
             "preferred_food": {
-                "$ref": "#/$defs/PreferenceSchemaPreferredFoodEnum",
+                "allOf": [{"$ref": "#/$defs/PreferenceSchemaPreferredFoodEnum"}],
                 "default": "ba",
                 "description": "preferred_food",
                 "title": "Preferred Food",
             },
             "preferred_group": {
-                "$ref": "#/$defs/PreferenceSchemaPreferredGroupEnum",
+                "allOf": [{"$ref": "#/$defs/PreferenceSchemaPreferredGroupEnum"}],
                 "default": 1,
                 "description": "preferred_group",
                 "title": "Preferred Group",
