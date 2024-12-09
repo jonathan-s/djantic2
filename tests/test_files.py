@@ -1,9 +1,9 @@
 from tempfile import NamedTemporaryFile
 
 import pytest
+from pydantic import ConfigDict
 from testapp.models import Attachment
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 
@@ -45,7 +45,7 @@ def test_image_field_schema():
         "type": "object",
     }
 
-    assert AttachmentSchema.from_django(attachment).dict() == {
+    assert AttachmentSchema.from_django(attachment).model_dump() == {
         "id": attachment.id,
         "description": attachment.description,
         "image": attachment.image.name,

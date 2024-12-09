@@ -1,15 +1,14 @@
-import uuid
 import os.path
+import uuid
 from typing import Optional
 
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericRelation
-from django.db import models
-from django.utils.text import slugify
-from django.contrib.postgres.fields import JSONField, ArrayField
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from .fields import ListField, NotNullRestrictedCharField
@@ -281,7 +280,9 @@ class Case(ExtendedModel):
 
 class Listing(models.Model):
     items = ArrayField(models.TextField(), size=4)
-    content_type = models.ForeignKey(ContentType, on_delete=models.PROTECT, blank=True, null=True)
+    content_type = models.ForeignKey(
+        ContentType, on_delete=models.PROTECT, blank=True, null=True
+    )
 
 
 class NullableChar(models.Model):
@@ -289,4 +290,6 @@ class NullableChar(models.Model):
 
 
 class NullableFK(models.Model):
-    nullable_char = models.ForeignKey(NullableChar, null=True, blank=True, on_delete=models.CASCADE)
+    nullable_char = models.ForeignKey(
+        NullableChar, null=True, blank=True, on_delete=models.CASCADE
+    )

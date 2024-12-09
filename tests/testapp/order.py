@@ -57,15 +57,14 @@ class OrderItemDetail(models.Model):
 
 
 class OrderItemDetailFactory(DjangoModelFactory):
-
     class Meta:
         model = OrderItemDetail
 
 
 class OrderItemFactory(DjangoModelFactory):
-
     class Meta:
         model = OrderItem
+        skip_postgeneration_save = True
 
     @factory.post_generation
     def details(self, create, details, **kwargs):
@@ -77,9 +76,9 @@ class OrderItemFactory(DjangoModelFactory):
 
 
 class OrderFactory(DjangoModelFactory):
-
     class Meta:
         model = Order
+        skip_postgeneration_save = True
 
     @factory.post_generation
     def items(self, create, items, **kwargs):
@@ -88,15 +87,14 @@ class OrderFactory(DjangoModelFactory):
 
 
 class OrderUserProfileFactory(DjangoModelFactory):
-
     class Meta:
         model = OrderUserProfile
 
 
 class OrderUserFactory(DjangoModelFactory):
-
     class Meta:
         model = OrderUser
+        skip_postgeneration_save = True
 
     @factory.post_generation
     def orders(self, create, orders, **kwargs):

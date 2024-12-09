@@ -54,7 +54,6 @@ class ModelSchemaMetaclass(ModelMetaclass):
                 and issubclass(base, ModelSchema)
                 and base == ModelSchema
             ):
-
                 config = namespace["model_config"]
                 include = config.get("include", None)
                 exclude = config.get("exclude", None)
@@ -74,7 +73,7 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     raise PydanticUserError(
                         f'{exc} (Is `model_config["model"]` a valid Django model class?)',
                         code="class-not-valid",
-                    )
+                    ) from exc
 
                 if include == "__annotations__":
                     include = list(annotations.keys())
@@ -103,7 +102,6 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     python_type = None
                     pydantic_field = None
                     if field_name in annotations and field_name in namespace:
-
                         python_type = annotations.pop(field_name)
                         pydantic_field = namespace[field_name]
                         if (
@@ -143,10 +141,10 @@ class ModelSchemaMetaclass(ModelMetaclass):
 def _is_optional_field(annotation) -> bool:
     args = get_args(annotation)
     return (
-            (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
-            and type(None) in args
-            and len(args) == 2
-            and any(inspect.isclass(arg) and issubclass(arg, ModelSchema) for arg in args)
+        (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
+        and type(None) in args
+        and len(args) == 2
+        and any(inspect.isclass(arg) and issubclass(arg, ModelSchema) for arg in args)
     )
 
 
@@ -221,7 +219,9 @@ class ProxyGetterNestedObj:
                     non_none_type_annotation = next(
                         arg for arg in get_args(annotation) if arg is not type(None)
                     )
-                    data[key] = self._get_annotation_objects(value, non_none_type_annotation)
+                    data[key] = self._get_annotation_objects(
+                        value, non_none_type_annotation
+                    )
 
             elif inspect.isclass(annotation) and issubclass(annotation, ModelSchema):
                 data[key] = self._get_annotation_objects(self.get(key), annotation)
@@ -232,7 +232,6 @@ class ProxyGetterNestedObj:
 
 
 class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
-
     def __eq__(self, other: Any) -> bool:
         result = super().__eq__(other)
         if isinstance(result, bool):
@@ -276,7 +275,8 @@ class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
         return cls.from_django(*args, **kwargs)
 
     @classmethod
-    def from_django(cls, objs, many=False, context={}):
+    def from_django(cls, objs, many=False, context=None):
+        context = context or {}
         if many:
             result_objs = []
             for obj in objs:

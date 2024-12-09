@@ -1,7 +1,13 @@
 from typing import Optional
 
 import pytest
-from pydantic import ConfigDict, ValidationError, ValidationInfo, field_validator
+from packaging import version
+from pydantic import (
+    ConfigDict,
+    ValidationError,
+    ValidationInfo,
+    field_validator,
+)
 from testapp.models import (
     Configuration,
     Listing,
@@ -46,25 +52,21 @@ def test_schema_without_include_and_exclude():
 
 @pytest.mark.django_db
 def test_context_for_field():
-
     def get_context():
-        return {'check_title': lambda x: x.istitle()}
+        return {"check_title": lambda x: x.istitle()}
 
     class UserSchema(ModelSchema):
-        model_config = ConfigDict(
-            model=User,
-            revalidate_instances='always'
-        )
+        model_config = ConfigDict(model=User, revalidate_instances="always")
 
-        @field_validator('first_name', mode="before", check_fields=False)
+        @field_validator("first_name", mode="before", check_fields=False)
         @classmethod
         def validate_first_name(cls, v: str, info: ValidationInfo):
             if not info.context:
                 return v
 
-            check_title = info.context.get('check_title')
+            check_title = info.context.get("check_title")
             if check_title and not check_title(v):
-                raise ValueError('First name needs to be a title')
+                raise ValueError("First name needs to be a title")
             return v
 
     user = User.objects.create(first_name="hello", email="a@a.com")
@@ -217,7 +219,7 @@ def test_postgres_json_field():
 
 
 @pytest.mark.django_db
-def test_lazy_choice_field():
+def test_lazy_choice_field(pydantic_version: version.Version):
     """
     Test generating a dynamic enum choice field.
     """
@@ -227,7 +229,7 @@ def test_lazy_choice_field():
             model=Record, include=["record_type", "record_status"]
         )
 
-    assert RecordSchema.model_json_schema() == {
+    pydantic_v28_schema = {
         "$defs": {
             "RecordSchemaRecordStatusEnum": {
                 "enum": [0, 1, 2],
@@ -243,29 +245,73 @@ def test_lazy_choice_field():
         "description": "A generic record model.",
         "properties": {
             "record_type": {
-                "$ref": "#/$defs/RecordSchemaRecordTypeEnum",
+                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordTypeEnum"}],
                 "default": "NEW",
                 "description": "record_type",
                 "title": "Record Type",
             },
             "record_status": {
-                "$ref": "#/$defs/RecordSchemaRecordStatusEnum",
+                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordStatusEnum"}],
                 "default": 0,
                 "description": "record_status",
                 "title": "Record Status",
+            },
+            "record_type": {
+                "allOf": [{"$ref": "#/$defs/RecordSchemaRecordTypeEnum"}],
+                "default": "NEW",
+                "description": "record_type",
+                "title": "Record Type",
             },
         },
         "title": "RecordSchema",
         "type": "object",
     }
 
+    pydantic_v29_schema = {
+        "$defs": {
+            "RecordSchemaRecordStatusEnum": {
+                "enum": [0, 1, 2],
+                "title": "RecordSchemaRecordStatusEnum",
+                "type": "integer",
+            },
+            "RecordSchemaRecordTypeEnum": {
+                "enum": ["NEW", "OLD"],
+                "title": "RecordSchemaRecordTypeEnum",
+                "type": "string",
+            },
+        },
+        "description": "A generic record model.",
+        "properties": {
+            "record_status": {
+                "$ref": "#/$defs/RecordSchemaRecordStatusEnum",
+                "default": 0,
+                "description": "record_status",
+                "title": "Record Status",
+            },
+            "record_type": {
+                "$ref": "#/$defs/RecordSchemaRecordTypeEnum",
+                "default": "NEW",
+                "description": "record_type",
+                "title": "Record Type",
+            },
+        },
+        "title": "RecordSchema",
+        "type": "object",
+    }
+
+    schema = pydantic_v29_schema
+    if pydantic_version < version.parse("2.9"):
+        schema = pydantic_v28_schema
+
+    assert RecordSchema.model_json_schema() == schema
+
 
 @pytest.mark.django_db
-def test_enum_choices():
+def test_enum_choices(pydantic_version: version.Version):
     class PreferenceSchema(ModelSchema):
         model_config = ConfigDict(model=Preference, use_enum_values=True)
 
-    assert PreferenceSchema.model_json_schema() == {
+    pydantic_v28_schema = {
         "$defs": {
             "PreferenceSchemaPreferredFoodEnum": {
                 "enum": ["ba", "ap"],
@@ -288,7 +334,82 @@ def test_enum_choices():
                 "type": "string",
             },
         },
-        "description": "Preference(id, name, preferred_food, preferred_group, preferred_sport, preferred_musician)",
+        "description": "Preference(id, name, preferred_food, preferred_group, "
+        "preferred_sport, preferred_musician)",
+        "properties": {
+            "id": {
+                "anyOf": [{"type": "integer"}, {"type": "null"}],
+                "default": None,
+                "description": "id",
+                "title": "Id",
+            },
+            "name": {
+                "description": "name",
+                "maxLength": 128,
+                "title": "Name",
+                "type": "string",
+            },
+            "preferred_food": {
+                "allOf": [{"$ref": "#/$defs/PreferenceSchemaPreferredFoodEnum"}],
+                "default": "ba",
+                "description": "preferred_food",
+                "title": "Preferred Food",
+            },
+            "preferred_group": {
+                "allOf": [{"$ref": "#/$defs/PreferenceSchemaPreferredGroupEnum"}],
+                "default": 1,
+                "description": "preferred_group",
+                "title": "Preferred Group",
+            },
+            "preferred_musician": {
+                "anyOf": [
+                    {"$ref": "#/$defs/PreferenceSchemaPreferredMusicianEnum"},
+                    {"type": "null"},
+                ],
+                "default": "",
+                "description": "preferred_musician",
+                "title": "Preferred Musician",
+            },
+            "preferred_sport": {
+                "anyOf": [
+                    {"$ref": "#/$defs/PreferenceSchemaPreferredSportEnum"},
+                    {"type": "null"},
+                ],
+                "default": None,
+                "description": "preferred_sport",
+                "title": "Preferred Sport",
+            },
+        },
+        "required": ["name"],
+        "title": "PreferenceSchema",
+        "type": "object",
+    }
+
+    pydantic_v29_schema = {
+        "$defs": {
+            "PreferenceSchemaPreferredFoodEnum": {
+                "enum": ["ba", "ap"],
+                "title": "PreferenceSchemaPreferredFoodEnum",
+                "type": "string",
+            },
+            "PreferenceSchemaPreferredGroupEnum": {
+                "enum": [1, 2],
+                "title": "PreferenceSchemaPreferredGroupEnum",
+                "type": "integer",
+            },
+            "PreferenceSchemaPreferredMusicianEnum": {
+                "enum": ["tom_jobim", "sinatra", ""],
+                "title": "PreferenceSchemaPreferredMusicianEnum",
+                "type": "string",
+            },
+            "PreferenceSchemaPreferredSportEnum": {
+                "enum": ["football", "basketball", ""],
+                "title": "PreferenceSchemaPreferredSportEnum",
+                "type": "string",
+            },
+        },
+        "description": "Preference(id, name, preferred_food, preferred_group, "
+        "preferred_sport, preferred_musician)",
         "properties": {
             "id": {
                 "anyOf": [{"type": "integer"}, {"type": "null"}],
@@ -314,15 +435,6 @@ def test_enum_choices():
                 "description": "preferred_group",
                 "title": "Preferred Group",
             },
-            "preferred_sport": {
-                "anyOf": [
-                    {"$ref": "#/$defs/PreferenceSchemaPreferredSportEnum"},
-                    {"type": "null"},
-                ],
-                "default": None,
-                "description": "preferred_sport",
-                "title": "Preferred Sport",
-            },
             "preferred_musician": {
                 "anyOf": [
                     {"$ref": "#/$defs/PreferenceSchemaPreferredMusicianEnum"},
@@ -332,11 +444,25 @@ def test_enum_choices():
                 "description": "preferred_musician",
                 "title": "Preferred Musician",
             },
+            "preferred_sport": {
+                "anyOf": [
+                    {"$ref": "#/$defs/PreferenceSchemaPreferredSportEnum"},
+                    {"type": "null"},
+                ],
+                "default": None,
+                "description": "preferred_sport",
+                "title": "Preferred Sport",
+            },
         },
         "required": ["name"],
         "title": "PreferenceSchema",
         "type": "object",
     }
+
+    schema = pydantic_v29_schema
+    if pydantic_version < version.parse("2.9"):
+        schema = pydantic_v28_schema
+    assert PreferenceSchema.model_json_schema() == schema
 
     preference = Preference.objects.create(
         name="Jordan",
@@ -408,7 +534,7 @@ def test_listing():
     }
 
     preference = Listing(items=["a", "b"])
-    assert ListingSchema.from_django(preference).dict() == {
+    assert ListingSchema.from_django(preference).model_dump() == {
         "content_type": None,
         "id": None,
         "items": ["a", "b"],
@@ -418,22 +544,18 @@ def test_listing():
 @pytest.mark.django_db
 def test_nullable_fk():
     class NullableCharSchema(ModelSchema):
-        model_config = ConfigDict(model=NullableChar, include='value')
+        model_config = ConfigDict(model=NullableChar, include="value")
 
     class NullableFKSchema(ModelSchema):
         nullable_char: Optional[NullableCharSchema] = None
-        model_config = ConfigDict(model=NullableFK, include='nullable_char')
+        model_config = ConfigDict(model=NullableFK, include="nullable_char")
 
     nullable_char = NullableChar(value="test")
     nullable_char.save()
     model = NullableFK(nullable_char=nullable_char)
-    assert NullableFKSchema.from_django(model).dict() == {
-        "nullable_char": {
-            "value": "test"
-        }
+    assert NullableFKSchema.from_django(model).model_dump() == {
+        "nullable_char": {"value": "test"}
     }
 
     model2 = NullableFK(nullable_char=None)
-    assert NullableFKSchema.from_django(model2).dict() == {
-        "nullable_char": None
-    }
+    assert NullableFKSchema.from_django(model2).model_dump() == {"nullable_char": None}

@@ -2,11 +2,9 @@ import datetime
 from typing import Optional
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import AliasGenerator, BaseModel, ConfigDict, Field
+from testapp.models import Profile, User
 
-from testapp.models import User, Profile, Configuration
-
-from pydantic import ConfigDict, AliasGenerator
 from djantic import ModelSchema
 
 
@@ -117,7 +115,7 @@ def test_include_exclude():
 
     included = UserSchema.model_json_schema()["properties"].keys()
     assert set(included) == set(UserSchema.model_config["include"])
-    assert set(included) == set(["first_name", "email"])
+    assert set(included) == {"first_name", "email"}
 
     class UserSchema(ModelSchema):
         """
@@ -132,14 +130,12 @@ def test_include_exclude():
         )
 
     not_excluded = UserSchema.model_json_schema()["properties"].keys()
-    assert set(not_excluded) == set(
-        [
-            field
-            for field in all_user_fields
-            if field not in UserSchema.model_config["exclude"]
-        ]
-    )
-    assert set(not_excluded) == set(["profile", "id"])
+    assert set(not_excluded) == {
+        field
+        for field in all_user_fields
+        if field not in UserSchema.model_config["exclude"]
+    }
+    assert set(not_excluded) == {"profile", "id"}
 
 
 @pytest.mark.django_db
@@ -183,7 +179,7 @@ def test_annotations():
     assert props["email"]["default"] == "jordan@eremieff.com"
     assert props["first_name"]["default"] == "Hello"
     assert props["updated_at"]["default"] == updated_at_dt.strftime("%Y-%m-%dT00:00:00")
-    assert set(schema["required"]) == set(["last_name"])
+    assert set(schema["required"]) == {"last_name"}
 
 
 @pytest.mark.skip(reason="Dumping by alias for model json schema seems to not work")
@@ -219,12 +215,14 @@ def test_by_alias_generator():
         },
         "required": ["FIRST_NAME"],
     }
-    assert set(UserSchema.model_json_schema()["properties"].keys()) == set(
-        ["FIRST_NAME", "LAST_NAME"]
-    )
-    assert set(UserSchema.schema(by_alias=False)["properties"].keys()) == set(
-        ["first_name", "last_name"]
-    )
+    assert set(UserSchema.model_json_schema()["properties"].keys()) == {
+        "FIRST_NAME",
+        "LAST_NAME",
+    }
+    assert set(UserSchema.schema(by_alias=False)["properties"].keys()) == {
+        "first_name",
+        "last_name",
+    }
 
 
 def test_sub_model():
@@ -251,9 +249,10 @@ def test_sub_model():
         profile: ProfileSchema
         model_config = ConfigDict(model=User, include=["id", "sign_up", "profile"])
 
-    assert set(UserSchema.model_json_schema()["$defs"].keys()) == set(
-        ["ProfileSchema", "SignUp"]
-    )
+    assert set(UserSchema.model_json_schema()["$defs"].keys()) == {
+        "ProfileSchema",
+        "SignUp",
+    }
 
     class Notification(BaseModel):
         """
@@ -264,12 +263,16 @@ def test_sub_model():
         content: str
         sent_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
-    assert set(Notification.model_json_schema()["properties"].keys()) == set(
-        ["user", "content", "sent_at"]
-    )
-    assert set(Notification.model_json_schema()["$defs"].keys()) == set(
-        ["ProfileSchema", "SignUp", "UserSchema"]
-    )
+    assert set(Notification.model_json_schema()["properties"].keys()) == {
+        "user",
+        "content",
+        "sent_at",
+    }
+    assert set(Notification.model_json_schema()["$defs"].keys()) == {
+        "ProfileSchema",
+        "SignUp",
+        "UserSchema",
+    }
 
 
 @pytest.mark.django_db
