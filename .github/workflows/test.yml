@@ -27,6 +27,6 @@ jobs:
             ${{ runner.os }}-pip-
       - name: Install dependencies
         run: |
-          pip install -U pip poetry tox tox-gh-actions
+          pip install -U pip tox tox-gh-actions
       - name: "Run tox targets for ${{ matrix.python-version }}"
         run: "python -m tox"
