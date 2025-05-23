@@ -1,40 +1,73 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "djantic2"
 version = "1.0.5"
 description = "Pydantic models for Django"
 authors = [
-  "Jonathan Sundqvist <git@co.argpar.se>",
-  "Jordan Eremieff <jordan@eremieff.com>",
+  {name = "Jonathan Sundqvist", email = "git@co.argpar.se"},
+  {name = "Jordan Eremieff", email = "jordan@eremieff.com"},
 ]
-license = "MIT"
-packages = [{ include = "djantic" }]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pydantic>=2.6.2",
+    "Django>3,<6",
+]
 
-[tool.poetry.dependencies]
-python = "^3.8"
-pydantic = "^2.6.2"
-Django = ">3,<6"
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.3.7",
+    "setuptools>=65.5.1",
+    "twine>=3.4.1",
+    "wheel>=0.38.1",
+    "mypy>=0.910",
+    "pytest>=6.2.4",
+    "pytest-cov>=2.12.1",
+    "codecov>=2.1.11",
+    "mkdocs>=1.2.3",
+    "mkdocs-material>=7.1.10",
+    "mkautodoc>=0.1.0",
+    "Pygments>=2.9.0",
+    "pymdown-extensions>=8.2",
+    "rich>=10.6.0",
+    "django-stubs>=1.8.0",
+    "pytest-django>=4.4.0",
+    "psycopg2-binary>=2.9.1",
+    "bump2version>=1.0.1",
+    "factory-boy>=3.2.1",
+]
 
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.3.7"
-setuptools = "^65.5.1"
-twine = "^3.4.1"
-wheel = "^0.38.1"
-mypy = "^0.910"
-pytest = "^6.2.4"
-pytest-cov = "^2.12.1"
-codecov = "^2.1.11"
-mkdocs = "^1.2.3"
-mkdocs-material = "^7.1.10"
-mkautodoc = "^0.1.0"
-Pygments = "^2.9.0"
-pymdown-extensions = "^8.2"
-rich = "^10.6.0"
-django-stubs = "^1.8.0"
-pytest-django = "^4.4.0"
-psycopg2-binary = "^2.9.1"
-bump2version = "^1.0.1"
-factory-boy = "^3.2.1"
+[project.urls]
+Homepage = "https://github.com/jonathan-s/djantic2/"
+Repository = "https://github.com/jonathan-s/djantic2/"
 
+[tool.setuptools.packages.find]
+include = ["djantic*"]
+
+[tool.setuptools.package-data]
+djantic = ["py.typed"]
 
 [tool.ruff]
 line-length = 88
@@ -59,8 +92,3 @@ lint.ignore = [
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
