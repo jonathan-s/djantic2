@@ -23,7 +23,6 @@ jobs:
             ${{ runner.os }}-publish-pip-
       - name: Install dependencies
         run: |
-          pip install -U pip poetry
           pip install setuptools wheel twine
       - name: Publish
         env:
