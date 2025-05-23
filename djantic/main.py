@@ -21,9 +21,16 @@ if sys.version_info >= (3, 10):
 else:
     from typing import Union as UnionType
 
+from typing import Generic, TypeVar, get_origin
+
+from django.db.models import Model as DjangoModel
+
 from .fields import ModelSchemaField
 
 _is_base_model_class_defined = False
+
+_M = TypeVar("_M", bound=DjangoModel)
+_T = TypeVar("_T", bound=DjangoModel)
 
 
 class ModelSchemaJSONEncoder(DjangoJSONEncoder):
@@ -48,14 +55,29 @@ class ModelSchemaMetaclass(ModelMetaclass):
     @no_type_check
     def __new__(mcs, name: str, bases: tuple, namespace: dict, **kwargs):
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
+
         for base in reversed(bases):
             if (
                 _is_base_model_class_defined
                 and issubclass(base, ModelSchema)
-                and base == ModelSchema
+                and (
+                    ## Start to ensure generic origin is ModelSchema
+                    # When schema is inherited from another class with generic
+                    # origin, we need to check if the base class is ModelSchema
+                    (
+                        hasattr(base, "__pydantic_generic_metadata__")
+                        and base.__pydantic_generic_metadata__.get("origin")
+                        == ModelSchema
+                    )
+                    or base == ModelSchema
+                )
             ):
+                config = namespace.get("model_config", None)
+                if config == {}:
+                    continue
 
-                config = namespace["model_config"]
+                ## Finish to ensure generic origin is ModelSchema
+
                 include = config.get("include", None)
                 exclude = config.get("exclude", None)
 
@@ -69,12 +91,32 @@ class ModelSchemaMetaclass(ModelMetaclass):
                 annotations = namespace.get("__annotations__", {})
 
                 try:
+                    ## Get from generic metadata if available
+                    #
+                    if "model" not in config:
+                        if hasattr(
+                            base, "__pydantic_generic_metadata__"
+                        ) and base.__pydantic_generic_metadata__.get("args"):
+                            config["model"] = base.__pydantic_generic_metadata__.get(
+                                "args"
+                            )[0]
+
                     fields = config["model"]._meta.get_fields()
                 except (AttributeError, KeyError) as exc:
                     raise PydanticUserError(
-                        f'{exc} (Is `model_config["model"]` a valid Django model class?)',
+                        (
+                            f'{exc} (Is model_config["model"] a valid Django model class?) '
+                            '\nPlease set the model_config["model"] or a generic type with a '
+                            "Django model class as the first argument. \n\n"
+                            "Example: \n\n"
+                            "- class MyModelSchema(ModelSchema):\n"
+                            '\n      model_config = {"model": MyModel}\n\n'
+                            "or\n\n"
+                            "- class MyModelSchema(ModelSchema[MyModel]):\n"
+                            "    ...\n"
+                        ),
                         code="class-not-valid",
-                    )
+                    ) from None
 
                 if include == "__annotations__":
                     include = list(annotations.keys())
@@ -103,7 +145,6 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     python_type = None
                     pydantic_field = None
                     if field_name in annotations and field_name in namespace:
-
                         python_type = annotations.pop(field_name)
                         pydantic_field = namespace[field_name]
                         if (
@@ -135,6 +176,7 @@ class ModelSchemaMetaclass(ModelMetaclass):
                     __doc__=cls.__doc__,
                     **field_values,
                 )
+
                 return model_schema
 
         return cls
@@ -143,10 +185,10 @@ class ModelSchemaMetaclass(ModelMetaclass):
 def _is_optional_field(annotation) -> bool:
     args = get_args(annotation)
     return (
-            (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
-            and type(None) in args
-            and len(args) == 2
-            and any(inspect.isclass(arg) and issubclass(arg, ModelSchema) for arg in args)
+        (get_origin(annotation) is Union or get_origin(annotation) is UnionType)
+        and type(None) in args
+        and len(args) == 2
+        and any(inspect.isclass(arg) and issubclass(arg, ModelSchema) for arg in args)
     )
 
 
@@ -157,7 +199,7 @@ class ProxyGetterNestedObj:
 
     def get(self, key: Any, default: Any = None) -> Any:
         if "__" in key:
-            # Allow double underscores aliases: `first_name: str = Field(alias="user__first_name")`
+            # Allow double underscores aliases: first_name: str = Field(alias="user__first_name")
             keys_map = key.split("__")
             attr = reduce(lambda a, b: getattr(a, b, default), keys_map, self._obj)
         else:
@@ -221,7 +263,9 @@ class ProxyGetterNestedObj:
                     non_none_type_annotation = next(
                         arg for arg in get_args(annotation) if arg is not type(None)
                     )
-                    data[key] = self._get_annotation_objects(value, non_none_type_annotation)
+                    data[key] = self._get_annotation_objects(
+                        value, non_none_type_annotation
+                    )
 
             elif inspect.isclass(annotation) and issubclass(annotation, ModelSchema):
                 data[key] = self._get_annotation_objects(self.get(key), annotation)
@@ -231,8 +275,7 @@ class ProxyGetterNestedObj:
         return data
 
 
-class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
-
+class ModelSchema(BaseModel, Generic[_M], metaclass=ModelSchemaMetaclass):
     def __eq__(self, other: Any) -> bool:
         result = super().__eq__(other)
         if isinstance(result, bool):
@@ -241,6 +284,51 @@ class ModelSchema(BaseModel, metaclass=ModelSchemaMetaclass):
         if result is NotImplemented and isinstance(other, dict):
             return self.model_dump() == other
         return result
+
+    def save(
+        self,
+        instance: _M | None = None,
+        partial: bool | None = None,
+        *args: Any,
+        **kwargs: Any,
+    ) -> _M:
+        """Save the model instance to the database.
+
+        This method saves the current model data to the database. If an instance is
+        provided, it updates the existing instance with the data from the current object.
+        If no instance is provided, it creates a new instance in the database.
+
+        Args:
+            instance: An optional model instance to update. If provided, the instance will be
+                updated with the current model data. If None, a new instance will be created.
+            partial: If True, only fields that have been explicitly set will be updated.
+                If None or False, all fields will be updated/saved.
+            *args: Additional positional arguments to pass to the model's save method.
+            **kwargs: Additional keyword arguments to pass to the model's save method.
+
+        Returns:
+            The saved model instance.
+
+        Raises:
+            ValueError: If a field in the model data does not exist on the provided instance.
+        """
+
+        ## get subclassses
+
+        # Convert the model instance to a dictionary
+        _ModelClass: _M = self.model_config["model"]
+        data = self.model_dump() if not partial else self.model_dump(exclude_unset=True)
+        if instance:
+            # Update the existing instance with the new data
+            for key, value in data.items():
+                if hasattr(instance, key):
+                    setattr(instance, key, value)
+                else:
+                    raise ValueError(f"Field {key} does not exist on the model.")
+            instance.save(*args, **kwargs)
+            return instance
+
+        return _ModelClass.objects.create(**self.model_dump())
 
     @classmethod
     def model_json_schema(cls, *args, **kwargs):
