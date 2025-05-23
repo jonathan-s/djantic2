@@ -21,7 +21,7 @@ if sys.version_info >= (3, 10):
 else:
     from typing import Union as UnionType
 
-from typing import Generic, TypeVar, get_origin
+from typing import Generic, TypeVar
 
 from django.db.models import Model as DjangoModel
 
@@ -312,10 +312,6 @@ class ModelSchema(BaseModel, Generic[_M], metaclass=ModelSchemaMetaclass):
         Raises:
             ValueError: If a field in the model data does not exist on the provided instance.
         """
-
-        ## get subclassses
-
-        # Convert the model instance to a dictionary
         _ModelClass: _M = self.model_config["model"]
         data = self.model_dump() if not partial else self.model_dump(exclude_unset=True)
         if instance:
