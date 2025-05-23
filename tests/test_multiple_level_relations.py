@@ -2,7 +2,7 @@ from decimal import Decimal
 from typing import List, Optional
 
 import pytest
-from pydantic import validator
+from pydantic import ConfigDict, validator
 from testapp.order import (
     Order,
     OrderItem,
@@ -12,7 +12,6 @@ from testapp.order import (
     OrderUserProfile,
 )
 
-from pydantic import ConfigDict
 from djantic import ModelSchema
 
 
@@ -338,7 +337,10 @@ def test_multiple_level_relations():
                 "type": "string",
             },
             "user_cache": {
-                "anyOf": [{"type": "object"}, {"type": "null"}],
+                "anyOf": [
+                    {"type": "object", "additionalProperties": True},
+                    {"type": "null"},
+                ],
                 "default": None,
                 "title": "User Cache",
             },
