@@ -30,7 +30,6 @@ from .fields import ModelSchemaField
 _is_base_model_class_defined = False
 
 _M = TypeVar("_M", bound=DjangoModel)
-_T = TypeVar("_T", bound=DjangoModel)
 
 
 class ModelSchemaJSONEncoder(DjangoJSONEncoder):
@@ -287,8 +286,8 @@ class ModelSchema(BaseModel, Generic[_M], metaclass=ModelSchemaMetaclass):
 
     def save(
         self,
-        instance: _M | None = None,
-        partial: bool | None = None,
+        instance: Optional[_M] = None,
+        partial: Optional[bool] = None,
         *args: Any,
         **kwargs: Any,
     ) -> _M:
