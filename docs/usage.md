@@ -456,3 +456,65 @@ Output:
   "updated_at": "2021-04-04T08:47:39.567455+00:00"
 }
 ```
+## Generic Type Support
+
+```python
+class UserSchema(ModelSchema[User]):
+    class Config:
+        model = User
+        include = ["id", "email", "profile"]
+```
+
+Inference type of Django model is supported in the schema class. This allows for better IDE support and type checking. The `ModelSchema` class can be used with any Django model, and the type of the model can be specified as a generic type parameter.
+
+inference in save method:
+
+```python
+from typing import TypeVar
+
+from djantic import ModelSchema
+from myapp.models import User
+
+
+class UserSchema(ModelSchema[User]):
+
+    class Config:
+        model = User
+        include = ("username", "email", "first_name", "last_name", "is_staff")
+
+
+serialized_user = UserSchema(
+    username="myusername",
+    email="my@email.com",
+    first_name="My First Name",
+    last_name="My Last Name",
+    is_staff=True,
+)
+
+new_user = serialized_user.save()
+```
+
+is optional, but it is recommended to use the `ModelSchema` class with the Django model type as a generic type parameter. This allows for better IDE support and type checking.
+
+Also with generic type support, now it's not necessary to define `model` in the `Config` class. The `ModelSchema` class will automatically infer the model type from the generic type parameter. This allows to get model type from the schema class itself.
+
+```python
+
+class UserSchema(ModelSchema[User]):
+
+    class Config:
+        include = ("username", "email", "first_name", "last_name", "is_staff")
+
+
+serialized_user = UserSchema(
+    username="myusername",
+    email="my@email.com",
+    first_name="My First Name",
+    last_name="My Last Name",
+    is_staff=True,
+)
+
+new_user = serialized_user.save()
+```
+
+IDE SUPPORT
