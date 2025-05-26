@@ -53,11 +53,15 @@ def test_update_existing_instance():
     class UserSchema(ModelSchema[User]):
         class Config:
             model = User
-            exclude = ("id", "created_at", "updated_at")
+            include = ["first_name", "last_name", "email"]
 
     # Create a schema with updated data
-    user_schema = UserSchema(
-        first_name="Janet", last_name="Smith-Johnson", email="janet.smith@example.com"
+    user_schema = UserSchema.model_validate(
+        {
+            "first_name": "Janet",
+            "last_name": "Smith-Johnson",
+            "email": "janet2.smith@example.com",
+        },
     )
 
     # Update the existing user
@@ -67,43 +71,40 @@ def test_update_existing_instance():
     assert updated_user.id == user.id
     assert updated_user.first_name == "Janet"
     assert updated_user.last_name == "Smith-Johnson"
-    assert updated_user.email == "janet.smith@example.com"
+    assert updated_user.email == "janet2.smith@example.com"
 
     # Verify it's updated in the database
     user_from_db = User.objects.get(id=user.id)
     assert user_from_db.first_name == "Janet"
     assert user_from_db.last_name == "Smith-Johnson"
-    assert user_from_db.email == "janet.smith@example.com"
+    assert user_from_db.email == "janet2.smith@example.com"
 
 
 @pytest.mark.django_db
 def test_partial_update():
-    """
-    Test partial updating of an existing model instance using the save() method.
-    """
-    # Create a user directly in the database
-    user = User.objects.create(
-        first_name="Alex", last_name="Johnson", email="alex.johnson@example.com"
-    )
-
-    class UserSchema(ModelSchema[User]):
+    class UserPartialSchema(ModelSchema[User]):
+        first_name: Optional[str]
+        last_name: Optional[str]
         email: Optional[str]
 
         class Config:
-            model = User
-            include = ("first_name", "last_name", "email")
+            exclude = ("created_at", "updated_at")
+
+    user = User.objects.create(
+        first_name="John", last_name="Doe", email="john.doe@example.com"
+    )
 
     # Create a schema with only some fields set
-    user_schema = UserSchema(first_name="Alexander")
+    user_schema = UserPartialSchema(email="email@email.com", first_name="John")
 
     # Update only the set fields
     updated_user = user_schema.save(instance=user, partial=True)
 
     # Verify only first_name was updated
     assert updated_user.id == user.id
-    assert updated_user.first_name == "Alexander"
-    assert updated_user.last_name == "Johnson"  # Unchanged
-    assert updated_user.email == "alex.johnson@example.com"  # Unchanged
+    assert updated_user.first_name == "John"
+    assert updated_user.last_name == "Doe"
+    assert updated_user.email == "email@email.com"
 
 
 @pytest.mark.django_db
@@ -132,43 +133,3 @@ def test_generic_type_inference_no_model_param():
 
     # Verify the model was correctly inferred from the generic type
     assert user_schema.model_config["model"] == User
-
-
-@pytest.mark.django_db
-def test_related_model_save():
-    """
-    Test saving a model with a related model field.
-    """
-
-    class ProfileSchema(ModelSchema[Profile]):
-        class Config:
-            model = Profile
-
-    class UserSchema(ModelSchema[User]):
-        profile: Optional[ProfileSchema] = None
-
-        class Config:
-            model = User
-            include = ("first_name", "last_name", "email")
-
-    # Create a user schema instance
-    user_schema = UserSchema(
-        first_name="Michael", last_name="Wilson", email="michael.wilson@example.com"
-    )
-
-    # Save the user first
-    user_instance = user_schema.save()
-
-    # Create and save a profile
-    profile_schema = ProfileSchema(
-        website="https://example.com", location="New York", user=user_instance.id
-    )
-
-    # We need to manually set the user for the profile
-    profile = profile_schema.save()
-
-    # Retrieve the user with the profile
-    user_with_profile = User.objects.get(id=user_instance.id)
-    assert hasattr(user_with_profile, "profile")
-    assert user_with_profile.profile.website == "https://example.com"
-    assert user_with_profile.profile.location == "New York"

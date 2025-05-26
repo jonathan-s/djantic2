@@ -101,6 +101,7 @@ class ModelSchemaMetaclass(ModelMetaclass):
                             )[0]
 
                     fields = config["model"]._meta.get_fields()
+
                 except (AttributeError, KeyError) as exc:
                     raise PydanticUserError(
                         (
@@ -284,10 +285,38 @@ class ModelSchema(BaseModel, Generic[_M], metaclass=ModelSchemaMetaclass):
             return self.model_dump() == other
         return result
 
+    def create(self, *args: Any, **kwargs: Any) -> _M:
+        ModelDjangoClass: type[_M] = self.model_config["model"]
+
+        record: _M = ModelDjangoClass._default_manager.create(**self.model_dump())
+
+        return record
+
+    def update(
+        self, instance: _M, partial: Optional[bool] = None, *args: Any, **kwargs: Any
+    ) -> _M:
+        if not isinstance(instance, self.model_config["model"]):
+            raise TypeError(
+                "instance is not of the type {0}".format(self.model_config["model"])  # noqa
+            )
+
+        data = self.model_dump() if not partial else self.model_dump(exclude_unset=True)
+
+        if instance:
+            # Update the existing instance with the new data
+            for key, value in data.items():
+                if hasattr(instance, key):
+                    setattr(instance, key, value)
+                else:
+                    raise ValueError(f"Field {key} does not exist on the model.")
+            instance.save(*args, **kwargs)
+
+            return instance
+
     def save(
         self,
         instance: Optional[_M] = None,
-        partial: Optional[bool] = None,
+        partial: Union[bool, None] = None,
         *args: Any,
         **kwargs: Any,
     ) -> _M:
@@ -301,7 +330,7 @@ class ModelSchema(BaseModel, Generic[_M], metaclass=ModelSchemaMetaclass):
             instance: An optional model instance to update. If provided, the instance will be
                 updated with the current model data. If None, a new instance will be created.
             partial: If True, only fields that have been explicitly set will be updated.
-                If None or False, all fields will be updated/saved.
+                If Unset, all fields will be updated/saved.
             *args: Additional positional arguments to pass to the model's save method.
             **kwargs: Additional keyword arguments to pass to the model's save method.
 
@@ -311,19 +340,13 @@ class ModelSchema(BaseModel, Generic[_M], metaclass=ModelSchemaMetaclass):
         Raises:
             ValueError: If a field in the model data does not exist on the provided instance.
         """
-        _ModelClass: _M = self.model_config["model"]
-        data = self.model_dump() if not partial else self.model_dump(exclude_unset=True)
         if instance:
-            # Update the existing instance with the new data
-            for key, value in data.items():
-                if hasattr(instance, key):
-                    setattr(instance, key, value)
-                else:
-                    raise ValueError(f"Field {key} does not exist on the model.")
-            instance.save(*args, **kwargs)
-            return instance
-
-        return _ModelClass.objects.create(**self.model_dump())
+            record = self.update(instance, partial, *args, *kwargs)
+            assert record is not None, "`update()` did not return an object instance."
+        else:
+            record = self.create(*args, **kwargs)
+            assert record is not None, "`create()` did not return an object instance."
+        return record
 
     @classmethod
     def model_json_schema(cls, *args, **kwargs):

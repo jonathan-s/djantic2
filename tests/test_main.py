@@ -1,18 +1,20 @@
 import pytest
-from pydantic.errors import PydanticUserError
-from testapp.models import User
-
 from pydantic import ConfigDict
+from pydantic.errors import PydanticUserError
+
 from djantic import ModelSchema
+from testapp.models import User
 
 
 @pytest.mark.django_db
 def test_model_config_contains_valid_model():
-    error_msg = r"(Is `model_config\[\"model\"\]` a valid Django model class?)"
-    with pytest.raises(PydanticUserError, match=error_msg):
+    error_msg = "(Is model_config[\"model\"] a valid Django model class?)"  # fmt: skip
+    with pytest.raises(PydanticUserError) as exc_info:
 
         class InvalidModelErrorSchema2(ModelSchema):
             model_config = ConfigDict(model="Ok")
+
+    assert error_msg in str(exc_info.value)
 
 
 @pytest.mark.django_db
