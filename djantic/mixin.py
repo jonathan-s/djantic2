@@ -1,11 +1,11 @@
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from django.db.models import Model as DjangoModel
 
 _M = TypeVar("_M", bound=DjangoModel)
 
 
-class ModelSchemaMixin:
+class ModelSchemaMixin(Generic[_M]):
     def create(self, *args: Any, **kwargs: Any) -> _M:
         ModelDjangoClass: type[_M] = self.model_config["model"]
 
