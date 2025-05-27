@@ -55,28 +55,31 @@ class ModelSchemaMetaclass(ModelMetaclass):
     def __new__(mcs, name: str, bases: tuple, namespace: dict, **kwargs):
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
 
+        config = namespace.get("model_config", {}) or namespace.get("Config", {})
+
         for base in reversed(bases):
             if (
                 _is_base_model_class_defined
+                and not (config is None or config == {})
                 and issubclass(base, ModelSchema)
-                and (
-                    ## Start to ensure generic origin is ModelSchema
-                    # When schema is inherited from another class with generic
-                    # origin, we need to check if the base class is ModelSchema
+                and
+                ## Start to ensure generic origin is ModelSchema
+                # When schema is inherited from another class with generic
+                # origin, we need to check if the base class is ModelSchema
+                (
                     (
                         hasattr(base, "__pydantic_generic_metadata__")
-                        and base.__pydantic_generic_metadata__.get("origin")
-                        == ModelSchema
+                        and (
+                            issubclass(
+                                base.__pydantic_generic_metadata__.get("origin"),
+                                ModelSchema,
+                            )
+                        )
                     )
                     or base == ModelSchema
                 )
             ):
-                config = namespace.get("model_config", None)
-                if config == {}:
-                    continue
-
                 ## Finish to ensure generic origin is ModelSchema
-
                 include = config.get("include", None)
                 exclude = config.get("exclude", None)
 
